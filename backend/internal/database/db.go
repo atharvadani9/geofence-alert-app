@@ -28,6 +28,11 @@ func NewDB(ctx context.Context, config *config.Config) (*DB, error) {
 		return nil, fmt.Errorf("failed to create database pool: %w", err)
 	}
 
+	// Test the connection
+	if err := pool.Ping(ctx); err != nil {
+		return nil, fmt.Errorf("failed to ping database: %w", err)
+	}
+
 	return &DB{pool: pool}, nil
 }
 

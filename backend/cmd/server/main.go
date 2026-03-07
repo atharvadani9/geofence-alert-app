@@ -6,12 +6,17 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
 	"github.com/atharvadani9/geofence-alert-app/internal/api"
 	"github.com/atharvadani9/geofence-alert-app/internal/config"
 	"github.com/atharvadani9/geofence-alert-app/internal/database"
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
+	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -21,11 +26,31 @@ func main() {
 	}
 
 	ctx := context.Background()
+
+	log.Println("Connecting to database...")
 	db, err := database.NewDB(ctx, cfg)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 	defer db.Close()
+	log.Println("✓ Database connection established")
+
+	// Run migrations automatically
+	log.Println("Running database migrations...")
+	// Use postgres:// scheme for lib/pq driver
+	migrateURL := strings.Replace(cfg.Database.URL, "postgresql://", "postgres://", 1)
+	m, err := migrate.New(
+		"file://migrations",
+		migrateURL,
+	)
+	if err != nil {
+		log.Fatalf("Failed to create migrate instance: %v", err)
+	}
+
+	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+		log.Fatalf("Failed to run migrations: %v", err)
+	}
+	log.Println("✓ Migrations completed successfully")
 
 	router := api.NewRouter(db, cfg)
 
