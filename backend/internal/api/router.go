@@ -27,10 +27,10 @@ func NewRouter(db *database.DB, cfg *config.Config) http.Handler {
 
 	// API routes
 	r.Route("/api/v1", func(r chi.Router) {
-		// Auth routes (to be implemented)
+		// Auth routes
 		r.Route("/auth", func(r chi.Router) {
-			// r.Post("/register", handlers.Register)
-			// r.Post("/login", handlers.Login)
+			r.Post("/register", handlers.RegisterUser(db, cfg))
+			r.Post("/login", handlers.LoginUser(db, cfg))
 			// r.Post("/refresh", handlers.RefreshToken)
 			// r.Get("/me", handlers.GetCurrentUser)
 		})
@@ -44,4 +44,3 @@ func NewRouter(db *database.DB, cfg *config.Config) http.Handler {
 
 	return r
 }
-
