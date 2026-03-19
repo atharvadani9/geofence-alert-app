@@ -31,15 +31,23 @@ func NewRouter(db *database.DB, cfg *config.Config) http.Handler {
 		r.Route("/auth", func(r chi.Router) {
 			r.Post("/register", handlers.RegisterUser(db, cfg))
 			r.Post("/login", handlers.LoginUser(db, cfg))
-			// r.Post("/refresh", handlers.RefreshToken)
-			// r.Get("/me", handlers.GetCurrentUser)
+			r.Post("/refresh", handlers.RefreshToken(db, cfg))
+
+			r.Group(func(r chi.Router) {
+				r.Use(middleware.Auth(db, cfg))
+				r.Get("/me", handlers.GetCurrentUser(db))
+			})
 		})
 
-		// Protected routes (to be implemented)
-		// r.Group(func(r chi.Router) {
-		// 	r.Use(middleware.Auth)
-		// 	// Add protected routes here
-		// })
+		r.Route("/relationships", func(r chi.Router) {
+			r.Use(middleware.Auth(db, cfg))
+			r.Post("/invite", handlers.InviteUser(db))
+			r.Post("/update-invite-status", handlers.UpdateInviteStatus(db))
+			r.Delete("/delete-relationship", handlers.DeleteRelationship(db))
+			r.Get("/caregivers", handlers.GetCaregivers(db))
+			r.Get("/tracked-users", handlers.GetTrackedUsers(db))
+		})
+
 	})
 
 	return r

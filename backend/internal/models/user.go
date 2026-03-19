@@ -2,6 +2,12 @@ package models
 
 import "time"
 
+// ContextKey is a custom type for context keys to avoid collisions
+type ContextKey string
+
+// UserContextKey is the context key for storing the authenticated user
+const UserContextKey ContextKey = "user"
+
 type User struct {
 	ID           string    `json:"id"`
 	Email        string    `json:"email"`
@@ -28,4 +34,8 @@ type UserRegisterRequest struct {
 type UserLoginRequest struct {
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required"`
+}
+
+type RefreshTokenRequest struct {
+	RefreshToken string `json:"refresh_token" validate:"required"`
 }
