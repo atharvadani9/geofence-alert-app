@@ -39,14 +39,14 @@ func (r *RelationshipRepo) CreateInvite(ctx context.Context, caregiverID, tracke
 	return relationship, nil
 }
 
-func (r *RelationshipRepo) GetRelationship(ctx context.Context, caregiverID, trackedUserID string) (*models.Relationship, error) {
+func (r *RelationshipRepo) GetRelationship(ctx context.Context, relationshipID, userID string) (*models.Relationship, error) {
 	query := `
 		SELECT id, caregiver_id, tracked_user_id, status, created_at, updated_at
 		FROM relationships
-		WHERE caregiver_id = $1 AND tracked_user_id = $2
+		WHERE id = $1 AND (caregiver_id = $2 OR tracked_user_id = $2)
 	`
 	relationship := &models.Relationship{}
-	err := r.db.Pool().QueryRow(ctx, query, caregiverID, trackedUserID).Scan(
+	err := r.db.Pool().QueryRow(ctx, query, relationshipID, userID).Scan(
 		&relationship.ID,
 		&relationship.CaregiverID,
 		&relationship.TrackedUserID,
@@ -174,4 +174,36 @@ func (r *RelationshipRepo) CheckRelationshipExists(ctx context.Context, caregive
 	}
 
 	return exists, nil
+}
+
+func (r *RelationshipRepo) GetPendingInvites(ctx context.Context, trackedUserID string) ([]*models.Relationship, error) {
+	query := `
+		SELECT id, caregiver_id, tracked_user_id, status, created_at, updated_at
+		FROM relationships
+		WHERE tracked_user_id = $1 AND status = 'pending'
+	`
+	rows, err := r.db.Pool().Query(ctx, query, trackedUserID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get pending invites: %w", err)
+	}
+	defer rows.Close()
+
+	invites := []*models.Relationship{}
+	for rows.Next() {
+		invite := &models.Relationship{}
+		err := rows.Scan(
+			&invite.ID,
+			&invite.CaregiverID,
+			&invite.TrackedUserID,
+			&invite.Status,
+			&invite.CreatedAt,
+			&invite.UpdatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan invite: %w", err)
+		}
+		invites = append(invites, invite)
+	}
+
+	return invites, nil
 }

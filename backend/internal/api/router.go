@@ -46,6 +46,7 @@ func NewRouter(db *database.DB, cfg *config.Config) http.Handler {
 			r.Delete("/delete-relationship", handlers.DeleteRelationship(db))
 			r.Get("/caregivers", handlers.GetCaregivers(db))
 			r.Get("/tracked-users", handlers.GetTrackedUsers(db))
+			r.Get("/pending-invites", handlers.GetPendingInvites(db))
 		})
 
 	})

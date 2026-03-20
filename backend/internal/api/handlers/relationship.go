@@ -217,3 +217,24 @@ func GetTrackedUsers(db *database.DB) http.HandlerFunc {
 		utils.RespondJSON(w, http.StatusOK, trackedUsers)
 	}
 }
+
+func GetPendingInvites(db *database.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user, ok := r.Context().Value(models.UserContextKey).(*models.User)
+		if !ok {
+			log.Println("Failed to get user from context")
+			utils.RespondError(w, http.StatusInternalServerError, "Failed to get user from context")
+			return
+		}
+
+		relationshipRepo := database.NewRelationshipRepo(db)
+		invites, err := relationshipRepo.GetPendingInvites(r.Context(), user.ID)
+		if err != nil {
+			log.Println(err)
+			utils.RespondError(w, http.StatusInternalServerError, "Failed to get pending invites")
+			return
+		}
+
+		utils.RespondJSON(w, http.StatusOK, invites)
+	}
+}
