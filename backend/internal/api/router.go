@@ -49,6 +49,13 @@ func NewRouter(db *database.DB, cfg *config.Config) http.Handler {
 			r.Get("/pending-invites", handlers.GetPendingInvites(db))
 		})
 
+		r.Route("/geofences", func(r chi.Router) {
+			r.Use(middleware.Auth(db, cfg))
+			r.Post("/create", handlers.CreateGeofence(db))
+			r.Get("/list", handlers.ListGeofencesForUser(db))
+			r.Post("/update", handlers.UpdateGeofence(db))
+			r.Post("/delete", handlers.DeleteGeofence(db))
+		})
 	})
 
 	return r
